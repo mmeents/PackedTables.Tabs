@@ -17,10 +17,18 @@ namespace PackedTableTabs.PropEditors {
   /// <remarks>This control is designed to be used within the PropertiesTab.
   /// Connections with associated with a <see cref="FieldModel"/>. It provides functionality to display and modify the field's value, and
   /// to commit changes back to the field model.</remarks>
-  public partial class TextPropertyEditor : UserControl, IAmAFieldEditor {
+  public partial class TextPropertyEditor : UserControl, IAmAFieldEditor, IEditStateAware {
     public TextPropertyEditor() {
       InitializeComponent();
     }
+    private string? _originalValue;
+    private bool _isEditing;
+
+    public event EventHandler? ValueChanged;
+    public event EventHandler? EditingStarted;
+    public bool HasUnsavedChanges =>
+        _originalValue != textBox1?.Text;
+
     private FieldModel? _fieldModel;
     public virtual FieldModel? Field {
       get { return _fieldModel; }
@@ -78,6 +86,7 @@ namespace PackedTableTabs.PropEditors {
       if (!Modified) {
         Modified = true;
       }
+      ValueChanged?.Invoke(this, EventArgs.Empty);
     }
 
     public void CommitToField() {
@@ -92,15 +101,39 @@ namespace PackedTableTabs.PropEditors {
       if (Field != null) {
         PropertyName = Field?.OwnerRow?.Owner?.Columns[Field.ColumnId].ColumnName ?? "";
         textBox1.Text = Field?.ValueString;
+        _originalValue = Field?.ValueString;
         Modified = false;
       } else {
         textBox1.Text = string.Empty;
       }
     }
 
+    public void CommitValue() {
+      if (Field != null && textBox1 != null) {
+        Field.Value = textBox1.Text;
+        _originalValue = textBox1.Text;
+      }
+    }
 
+    public void RevertValue() {
+      ResetToField();
+    }
 
+    public void SetEditingState(bool editing) {
+      _isEditing = editing;
+      if (textBox1 != null) {
+        textBox1.BackColor = editing ?
+            PropertiesTabColors.EditingLabelBackground :
+            PropertiesTabColors.NormalBackground;
+      }
+    }
 
+    private void textBox1_Enter(object sender, EventArgs e) {
+      if (!_isEditing) {
+        _originalValue = textBox1?.Text;
+        EditingStarted?.Invoke(this, EventArgs.Empty);
+      }
+    }
   }
 }
 
