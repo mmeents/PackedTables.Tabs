@@ -26,4 +26,8 @@ namespace PackedTableTabs {
 
   }
 
+  public interface IEditStateAware {
+    void SetEditingState(bool editing);
+  }
+
 }
