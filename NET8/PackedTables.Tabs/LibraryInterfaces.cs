@@ -22,6 +22,7 @@ namespace PackedTableTabs {
 
   public interface IAmAFieldEditor : IAmAFieldViewer {
 
+    public event EventHandler? ValueChanged;
     public void CommitToField();
 
   }

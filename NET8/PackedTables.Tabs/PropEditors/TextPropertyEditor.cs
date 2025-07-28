@@ -92,8 +92,14 @@ namespace PackedTableTabs.PropEditors {
     public void CommitToField() {
       if (Field == null) return;
       if (Modified) {
-        Field.ValueString = textBox1.Text;
-        Modified = false;
+        try { 
+            Field.Value = textBox1.Text;
+            _originalValue = textBox1.Text;            
+            Modified = false;
+        } catch (ValidationException) { 
+          textBox1.BackColor = PropertiesTabColors.ValidationError;
+          throw;
+        }        
       }
     }
 
