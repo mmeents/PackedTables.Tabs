@@ -156,16 +156,16 @@ namespace PackedTableTabs {
         Height = 24
       };
       BasePanel.Controls.Add(MenuPanel);
-
-      foreach (var field in TableRow.RowFields.OrderByDescending(kvp => kvp.Key)) {
-        var propertyEditor = PropertyEditorFactory.CreateEditor(field.Value, schema);
+      var fieldsToDisplay = GetFieldsToDisplay(TableRow, schema);
+      foreach (var field in fieldsToDisplay) {
+        var propertyEditor = PropertyEditorFactory.CreateEditor(field, schema);
         if (propertyEditor != null) {        
-          propertyEditor.Field = field.Value;
+          propertyEditor.Field = field;
           ((UserControl)propertyEditor).Dock = DockStyle.Top;
-          ((UserControl)propertyEditor).Height = 30; // Set a fixed height for each property editor
+          ((UserControl)propertyEditor).Height = GetEditorHeight(field, schema); 
           propertyEditor.LabelRight = 50; // Set a default label right position
           propertyEditor.ValueChanged += PropertyEditor_ValueChanged;
-          _propertyEditors[field.Key] = propertyEditor;
+          _propertyEditors[field.Id] = propertyEditor;
           BasePanel.Controls.Add(((UserControl)propertyEditor));          
         }
       }
@@ -231,30 +231,6 @@ namespace PackedTableTabs {
 
       // Default height
       return 30;
-    }
-
-    /// <summary>
-    /// Creates the appropriate editor based on the field's column type
-    /// </summary>
-    private IAmAFieldEditor? CreateEditorForField(FieldModel field) {
-      if (field?.OwnerRow?.Owner == null) return null;
-
-      var column = field.OwnerRow.Owner.Columns.Values
-          .FirstOrDefault(c => c.Id == field.ColumnId);
-
-      if (column == null) return null;
-
-      return column.ColumnType switch {
-        ColumnType.Boolean => new BooleanPropertyEditor(),
-        ColumnType.Int32 or 
-        ColumnType.Int64 or 
-        ColumnType.Decimal => new NumericPropertyEditor(),
-        ColumnType.DateTime => new DateTimePropertyEditor(),
-        ColumnType.Guid => new GuidPropertyEditor(),
-        ColumnType.String => new TextPropertyEditor(),
-        // For now, Unknown, Null, and Bytes default to text
-        _ => new TextPropertyEditor()
-      };
     }
 
     private void PropertyEditor_ValueChanged(object? sender, EventArgs e) {
